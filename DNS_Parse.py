@@ -5,7 +5,9 @@ import sys
 import sqlite3
 import traceback
 from datetime import datetime
-import bs4
+from bs4 import BeautifulSoup
+import requests
+import io
 
 
 def db_conn():
@@ -44,4 +46,19 @@ def dns_parse():
         spec_model = specs.find_element_by_css_selector(".catalog-product__name").text
         print(spec_model)
     driver.quit()
-dns_parse()
+#dns_parse()
+
+
+def parse_soup():
+    section = "17a89aab16404e77/videokarty/"
+    url = 'https://www.dns-shop.ru/catalog/' + section
+    headers = headers = {'User-Agent': "Chrome/88.0.4324.190"}
+    r = requests.get(url, headers=headers)
+    #r.encoding = "UTF-8"
+    with open("test.txt", "w", encoding="UTF-8") as f:
+        for tex in r:
+            f.write(r.text)
+    #print(r.text)
+    soup = BeautifulSoup(r.text, 'html.parser')
+    print(soup.prettify())
+parse_soup()
