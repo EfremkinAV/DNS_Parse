@@ -8,6 +8,11 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 import requests
 import io
+from webdriver_manager.chrome import ChromeDriverManager
+import urllib
+from urllib.request import urlretrieve
+import zipfile
+import xlrd
 
 
 def db_conn():
@@ -29,13 +34,14 @@ def db_conn():
 
 def dns_parse():
     name = "" #название товара которое надо найти
-    #section = "17a89a3916404e77/operativnaya-pamyat-dimm/"
+    section = "17a89a3916404e77/operativnaya-pamyat-dimm/"
     section = "17a89aab16404e77/videokarty/"
     url_start_page = "https://www.dns-shop.ru/catalog/" + section
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(ChromeDriverManager().install())
     driver.maximize_window()
     driver.get(url_start_page)
     driver.implicitly_wait(3)
+    driver.page_source.encode('utf-8')
     last_page = driver.find_element_by_class_name('pagination-widget__page-link_last ').get_attribute('href')
     last_page = re.findall('\d+$', last_page)
     last_page = int(''.join(last_page))
@@ -51,14 +57,39 @@ def dns_parse():
 
 def parse_soup():
     section = "17a89aab16404e77/videokarty/"
-    url = 'https://www.dns-shop.ru/catalog/' + section
-    headers = headers = {'User-Agent': "Chrome/88.0.4324.190"}
+    url = 'https://www.dns-shop.ru/catalog/' + section#"https://www.dns-shop.ru/catalog/17a8dae116404e77/nastolnye-i-napolnye-svetilniki/"
+    headers = headers = {'User-Agent': "App/0.0.1.1"}
     r = requests.get(url, headers=headers)
-    #r.encoding = "UTF-8"
+    r.encoding = "UTF-8"
     with open("test.txt", "w", encoding="UTF-8") as f:
-        for tex in r:
-            f.write(r.text)
-    #print(r.text)
+        f.write(r.text)
+    print(r.text)
     soup = BeautifulSoup(r.text, 'html.parser')
-    print(soup.prettify())
-parse_soup()
+    print(soup.text)
+#parse_soup()
+
+
+def save_file():
+    destination = "price_tomsk.zip"
+    url = 'https://www.dns-shop.ru/files/price/price-tomsk.zip'
+    urllib.request.urlretrieve(url, destination)
+    print()
+    return destination
+
+
+#save_file()
+
+
+def extract_file():
+    file_zip = zipfile.ZipFile("price_tomsk.zip", "r")#(save_file())
+    file_zip.extractall('')
+    file_name = str(''.join(file_zip.namelist()))
+    file_size = file_zip.getinfo(file_name).file_size
+    print("Распакован файл: ", file_name)
+    print("Размер файла: ", file_size/1000000, "Mb")
+    file_zip.close()
+
+
+extract_file()
+
+
