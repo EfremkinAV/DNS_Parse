@@ -13,7 +13,9 @@ import urllib
 from urllib.request import urlretrieve
 import zipfile
 import xlrd
-
+import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl import Workbook, load_workbook
 
 def db_conn():
     sqlite_connection = sqlite3.connect('DNS_PARSE.db')
@@ -90,6 +92,26 @@ def extract_file():
     file_zip.close()
 
 
-extract_file()
+#extract_file()
 
 
+def xl_get():
+    wbSearch = Workbook()
+    wbSearch = load_workbook("price-tomsk.xlsx")
+    wsSearch = wbSearch.active
+
+    wbResult = Workbook()
+    wsResult = wbResult.active
+    resultRow = 1
+
+    lookFor = 'Видеокарта'
+    #lookFor = lookFor.lower()
+
+    for i in range(1, 1000):
+        value = wsSearch.cell(row=i, column=2).value
+        if value == lookFor:
+            wsResult.cell(row=resultRow, column=1).value = value
+
+    wbResult.save("result.xlsx")
+
+xl_get()
