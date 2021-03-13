@@ -15,7 +15,10 @@ import zipfile
 import xlrd
 import openpyxl
 from openpyxl.utils import get_column_letter
-from openpyxl import Workbook, load_workbook
+from openpyxl import Workbook
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter, column_index_from_string
+
 
 def db_conn():
     sqlite_connection = sqlite3.connect('DNS_PARSE.db')
@@ -96,22 +99,30 @@ def extract_file():
 
 
 def xl_get():
-    wbSearch = Workbook()
-    wbSearch = load_workbook("price-tomsk.xlsx")
-    wsSearch = wbSearch.active
+    # Open a workbook
+    #workbook = xlrd.open_workbook('price-tomsk.xls')
 
-    wbResult = Workbook()
-    wsResult = wbResult.active
-    resultRow = 1
+    # Loads only current sheets to memory
+    book = xlrd.open_workbook('price-tomsk.xls', formatting_info=True)
+    sheets = book.sheet_names()
+    sheets_count = book.nsheets
+    worksheet = book.sheet_by_index(4)
+    print("Количество листов: ", sheets_count)
+    #sheets[4] = компьютеры и комплектующие
+    print("имя листа 4: ", sheets[4])
+    s = "Видеокарта"#"Видеокарта Asus AMD Radeon RX 550 Phoenix [PH-550-2G]"
+    reg = "*" + s + "*"
+    fs = re.findall(reg)
+    for sheet in book.sheets():
+        for rowidx in range(sheet.nrows):
+            row = sheet.row(rowidx)
+            for colidx, cell in enumerate(row):
+                if cell.value == (fs):
+                    print(sheet.name)
+                    print(colidx)
+                    print(rowidx)
+                    print(cell.value)
 
-    lookFor = 'Видеокарта'
-    #lookFor = lookFor.lower()
 
-    for i in range(1, 1000):
-        value = wsSearch.cell(row=i, column=2).value
-        if value == lookFor:
-            wsResult.cell(row=resultRow, column=1).value = value
-
-    wbResult.save("result.xlsx")
 
 xl_get()
