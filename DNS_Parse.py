@@ -20,6 +20,26 @@ from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter, column_index_from_string
 
 
+def fill_table():
+    #sqlite_connection = sqlite3.connect("DNS_PARSE.db")
+    #con = sqlite_connection.cursor()
+    book = xlrd.open_workbook('price-tomsk.xls')
+    sheets = book.sheet_names()
+    sheets_count = book.nsheets
+    worksheet = book.sheet_by_index(4)
+    print(worksheet)
+    print("Количество листов: ", sheets_count)
+    # sheets[4] = компьютеры и комплектующие
+    print("имя листа 4: ", sheets[4])
+
+    #createTable = ("INSERT INTO product (kod,prod,M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,M11,price,date)"
+    #                        "VALUES (?,?,?,?,?,?)", gname, gprice_old, gprice_dis, gmarket, g_add_date, city)
+
+
+#fill_table()
+
+
+
 def db_conn():
     sqlite_connection = sqlite3.connect('DNS_PARSE.db')
     con = sqlite_connection.cursor()
@@ -35,6 +55,7 @@ def db_conn():
     con.close()
     sqlite_connection.close()
 #db_conn()
+
 
 
 def dns_parse():
@@ -99,29 +120,69 @@ def extract_file():
 
 
 def xl_get():
-    # Open a workbook
-    #workbook = xlrd.open_workbook('price-tomsk.xls')
+    sqlite_connection = sqlite3.connect("DNS_PARSE.db")
+    con = sqlite_connection.cursor()
 
-    # Loads only current sheets to memory
-    book = xlrd.open_workbook('price-tomsk.xls', formatting_info=True)
-    sheets = book.sheet_names()
-    sheets_count = book.nsheets
-    worksheet = book.sheet_by_index(4)
-    print("Количество листов: ", sheets_count)
+    book = xlrd.open_workbook('price-tomsk.xls')
+    #sheets = book.sheet_names()
+    rows = book.sheet_by_index(4)
+    #print(rows)
+    #sheets_count = book.nsheets
+    #worksheet = book.sheet_by_index(4)
+    #print("Количество листов: ", sheets_count)
     #sheets[4] = компьютеры и комплектующие
-    print("имя листа 4: ", sheets[4])
-    s = "Видеокарта"#"Видеокарта Asus AMD Radeon RX 550 Phoenix [PH-550-2G]"
-    reg = "*" + s + "*"
-    fs = re.findall(reg)
-    for sheet in book.sheets():
-        for rowidx in range(sheet.nrows):
-            row = sheet.row(rowidx)
-            for colidx, cell in enumerate(row):
-                if cell.value == (fs):
-                    print(sheet.name)
-                    print(colidx)
-                    print(rowidx)
-                    print(cell.value)
+    #print("имя листа 4: ", sheets[4])
+
+
+    for r in range(13, rows.nrows):
+        kod = rows.cell_value(r, 0)
+        prod = rows.cell_value(r, 1)
+        M1 = rows.cell_value(r, 2)
+        M2 = rows.cell_value(r, 3)
+        M3 = rows.cell_value(r, 4)
+        M4 = rows.cell_value(r, 5)
+        M5 = rows.cell_value(r, 6)
+        M6 = rows.cell_value(r, 7)
+        M7 = rows.cell_value(r, 8)
+        M8 = rows.cell_value(r, 9)
+        M9 = rows.cell_value(r, 10)
+        M10 = rows.cell_value(r, 11)
+        M11 = rows.cell_value(r, 12)
+        price = rows.cell_value(r, 13)
+
+        #print(rows.cell_value(r, 1))
+        con.execute("INSERT INTO product (kod,prod,M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,M11,price)"
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (kod,prod,M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,M11,price))
+        sqlite_connection.commit()
+    con.close()
+    sqlite_connection.close()
+        # sqlite_connection = sqlite3.connect("DNS_PARSE.db")
+        # con = sqlite_connection.cursor()
+        #book = xlrd.open_workbook('price-tomsk.xls')
+        #sheets = book.sheet_names()
+        #sheets_count = book.nsheets
+        ##worksheet = book.sheet_by_index(4)
+        #print(worksheet)
+        #print("Количество листов: ", sheets_count)
+        # sheets[4] = компьютеры и комплектующие
+        #print("имя листа 4: ", sheets[4])
+
+        # createTable = ("INSERT INTO product (kod,prod,M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,M11,price,date)"
+        #                        "VALUES (?,?,?,?,?,?)", gname, gprice_old, gprice_dis, gmarket, g_add_date, city)
+
+    #s = "Видеокарта"#"Видеокарта Asus AMD Radeon RX 550 Phoenix [PH-550-2G]"
+    #reg = "*" + s + "*"
+    #fs = re.findall(reg)
+    #for sheet in book.sheets():
+    #    for rowidx in range(sheet.nrows):
+    #        row = sheet.row(rowidx)
+    #        for colidx, cell in enumerate(row):
+    #            if cell.value == (fs):
+    #                print(sheet.name)
+    #               print(colidx)
+    #                print(rowidx)
+    #                print(cell.value)
 
 
 
