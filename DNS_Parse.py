@@ -1,50 +1,58 @@
-from selenium import webdriver
 import re
-from selenium.common.exceptions import NoSuchElementException
 import sys
 import sqlite3
 import traceback
 from datetime import datetime
-from bs4 import BeautifulSoup
-import requests
 import io
-from webdriver_manager.chrome import ChromeDriverManager
 import urllib
 from urllib.request import urlretrieve
 import zipfile
 import xlrd
-import openpyxl
-from openpyxl.utils import get_column_letter
-from openpyxl import Workbook
-from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter, column_index_from_string
 import time
 import os
-
+from shutil import copyfile
 
 def save_file(city):
     city = "price-" + city + ".zip"
     url = 'https://www.dns-shop.ru/files/price/'+city
+    check_file = os.path.exists(city)
+    file_time = time.ctime(os.path.getctime(city))
     urllib.request.urlretrieve(url, city)
-    print(city)
+    #копирование файла из temp в основную папку. Нужно для сравнения файлов
     file_zip = zipfile.ZipFile(city, "r")
-    file_zip.extractall('')
+    file_zip.extractall('./temp/')
     file_name = str(''.join(file_zip.namelist()))
     file_size = file_zip.getinfo(file_name).file_size
-    print("Распакован файл: ", file_name)
-    print("Размер файла: ", file_size / 1000000, "Mb")
-    print("Дата создания файла: ", time.ctime(os.path.getctime(city)))
+    f1 = 'price-tomsk.xls'
+    f2 = './temp/price-tomsk.xls'
+    copyfile(f2, f1)
+    print(time.ctime(os.path.getmtime(f1)))
+    print(time.ctime(os.path.getmtime(f2)))
+    if time.ctime(os.path.getmtime(f1)) != time.ctime(os.path.getmtime(f2)):
+        copyfile(f2, f1)
+
+        print("файл", city, "обновлен")
+        print("Размер файла: ", file_size / 1000000, "Mb")
+        print("Дата создания файла: ", file_time)
     file_zip.close()
+    #return city
 
-#save_file("tomsk")#input("Введите город:"))
+
+#save_file(input("Введите город:"))
 
 
-def fill_db(city):
+#def file_time_diff(file_name):
+#    file_name =
+
+
+
+
+def fill_db():
     start_time = time.time()
     sqlite_connection = sqlite3.connect("DNS_PARSE.db")
     con = sqlite_connection.cursor()
 
-    #city = "tomsk"  # input("Введите город: ")
+    city = "tomsk"  # input("Введите город: ")
     file_name = "price-" + city + ".xls"
     book = xlrd.open_workbook(file_name)
     sheets_num = book.nsheets
@@ -66,21 +74,26 @@ def fill_db(city):
             M10 = rows.cell_value(r, 11)
             M11 = rows.cell_value(r, 12)
             price = rows.cell_value(r, 13)
-            parse_date = datetime.now().date() #Добыть дату файла
-
-            con.execute("INSERT INTO product (kod,prod,M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,M11,price,date)"
-                        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        (kod, prod, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, price, parse_date))
-            sqlite_connection.commit()
-
+            parse_date = time.ctime(os.path.getctime("price-tomsk.xls")) #Добыть дату файла
+            try:
+                con.execute("INSERT INTO product (kod,prod,M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,M11,price,date)"
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                            (kod, prod, M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, price, parse_date))
+                sqlite_connection.commit()
+            except sqlite3.Error as error:
+                print("Класс исключения: ", error.__class__)
+                print("Исключение", error.args)
+                print("Печать подробноcтей исключения SQLite: ")
+                exc_type, exc_value, exc_tb = sys.exc_info()
+                print(traceback.format_exception(exc_type, exc_value, exc_tb))
     con.close()
     sqlite_connection.close()
-
-
-    print("Таблица распарсилась за %s секунд" % (time.time() - start_time))
+    print("Таблица распарсилась за", str(time.time() - start_time), "секунд")
     print("---КОНЕЦ---")
 
-#fill_db("tomsk")
+
+fill_db()
+
 
 def db_delete_table(table_name):
     sqlite_connection = sqlite3.connect('DNS_PARSE.db')
@@ -91,4 +104,4 @@ def db_delete_table(table_name):
     sqlite_connection.close()
     print("ТАБЛИЦА", table_name, "ОЧИЩЕНА!")
 
-db_delete_table("product")
+#db_delete_table("product")
