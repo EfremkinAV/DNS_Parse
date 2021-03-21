@@ -12,6 +12,7 @@ import time
 import os
 from shutil import copyfile
 
+
 def save_file(city):
     city = "price-" + city + ".zip"
     url = 'https://www.dns-shop.ru/files/price/'+city
@@ -35,16 +36,6 @@ def save_file(city):
         print("Размер файла: ", file_size / 1000000, "Mb")
         print("Дата создания файла: ", file_time)
     file_zip.close()
-    #return city
-
-
-#save_file(input("Введите город:"))
-
-
-#def file_time_diff(file_name):
-#    file_name =
-
-
 
 
 def fill_db():
@@ -92,7 +83,7 @@ def fill_db():
     print("---КОНЕЦ---")
 
 
-fill_db()
+#fill_db()
 
 
 def db_delete_table(table_name):
@@ -105,3 +96,20 @@ def db_delete_table(table_name):
     print("ТАБЛИЦА", table_name, "ОЧИЩЕНА!")
 
 #db_delete_table("product")
+
+
+def db_request(req):
+    sqlite_connection = sqlite3.connect('DNS_PARSE.db')
+    con = sqlite_connection.cursor()
+    con.execute("SELECT * FROM product WHERE prod LIKE ?", (req,))
+    rows = con.fetchall()
+    c_rows = len(rows)
+    #print(c_rows)
+    print("Всего нашлось позиций:", c_rows)
+    for row in rows:
+        print(row)
+        if c_rows <= 0: #Не работает
+            print("Не нашлось такого в базе :(")
+
+
+db_request("%" + input("Запрос:") + "%")
